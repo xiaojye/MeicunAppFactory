@@ -21,6 +21,64 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    def keystoreFile = file('s.keystore.temp')
+    def keystorePassword = ''
+    def keystoreAlias = ''
+    def keystoreAliasPassword = ''
+    // default keystore file, PLZ config file path in key.properties
+
+    Properties properties = new Properties()
+    // key.properties file in the root director
+    properties.load(project.rootProject.file('key.properties').newDataInputStream())
+    def keystoreFilepath = properties.getProperty("keystore.path")
+
+    if (keystoreFilepath) {
+        keystoreFile = file(keystoreFilepath)
+        keystorePassword = properties.getProperty("keystore.password")
+        keystoreAlias = properties.getProperty("keystore.alias")
+        keystoreAliasPassword = properties.getProperty("keystore.alias_password")
+    }
+
+    signingConfigs {
+        debug {
+            storeFile keystoreFile
+            storePassword keystorePassword
+            keyAlias keystoreAlias
+            keyPassword keystoreAliasPassword
+        }
+
+        release {
+            storeFile keystoreFile
+            storePassword keystorePassword
+            keyAlias keystoreAlias
+            keyPassword keystoreAliasPassword
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
+        release {
+            minifyEnabled false   //混淆
+            shrinkResources false //移除无用的resource文件
+            zipAlignEnabled true  //可以让安装包中的资源按4字节对齐，这样可以减少应用在运行时的内存消耗。
+            buildConfigField "boolean", "LOG_DEBUG", "false" //是否显示Log
+
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+            signingConfig signingConfigs.release
+        }
+    }
+
+    //指定apk名字输出格式
+    android.applicationVariants.all { variant ->
+        variant.outputs.all {
+            output ->
+                outputFileName = "app-" + defaultConfig.versionName + "-" + variant.buildType.name + ".apk"
+        }
+    }
 }
 
 dependencies {
